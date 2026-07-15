@@ -38,11 +38,13 @@ public class AuthController(
         db.Users.Add(user);
         await db.SaveChangesAsync();
 
-        return Ok(new AuthResponse
+        var response = new AuthResponse
         {
             Token = jwtTokenService.GenerateToken(user),
             Email = user.Email
-        });
+        };
+
+        return CreatedAtAction(nameof(Me), response);
     }
 
     [HttpPost("login")]
