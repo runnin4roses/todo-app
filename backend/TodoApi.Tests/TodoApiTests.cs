@@ -164,3 +164,153 @@ public class ValidationTests(TodoApiWebApplicationFactory factory) : TodoApiTest
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 }
+
+public class AuthTests(TodoApiWebApplicationFactory factory) : TodoApiTestBase(factory)
+{
+    [Fact]
+    public async Task Register_returns_token_and_201()
+    {
+        var response = await Client.PostAsJsonAsync("/api/auth/register", new RegisterRequest
+        {
+            Email = "new-user@example.com",
+            Password = "password123"
+        });
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        var auth = await response.Content.ReadFromJsonAsync<AuthResponse>(JsonOptions);
+        Assert.NotNull(auth);
+        Assert.False(string.IsNullOrWhiteSpace(auth!.Token));
+        Assert.Equal("new-user@example.com", auth.Email);
+    }
+
+    [Fact]
+    public async Task Login_with_wrong_password_returns_401()
+    {
+        await RegisterAndGetTokenAsync("login-test@example.com");
+
+        var response = await Client.PostAsJsonAsync("/api/auth/login", new LoginRequest
+        {
+            Email = "login-test@example.com",
+            Password = "wrongpassword"
+        });
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Duplicate_register_returns_409()
+    {
+        await RegisterAndGetTokenAsync("duplicate@example.com");
+
+        var response = await Client.PostAsJsonAsync("/api/auth/register", new RegisterRequest
+        {
+            Email = "duplicate@example.com",
+            Password = "password123"
+        });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Me_returns_current_user()
+    {
+        var token = await RegisterAndGetTokenAsync("me-test@example.com");
+        SetBearerToken(token);
+
+        var response = await Client.GetAsync("/api/auth/me");
+        response.EnsureSuccessStatusCode();
+
+        var body = await response.Content.ReadFromJsonAsync<MeResponse>(JsonOptions);
+        Assert.NotNull(body);
+        Assert.Equal("me-test@example.com", body!.Email);
+        Assert.False(string.IsNullOrWhiteSpace(body.Id));
+    }
+}
+
+public class CrudTests(TodoApiWebApplicationFactory factory) : TodoApiTestBase(factory)
+{
+    [Fact]
+    public async Task Create_todo_returns_201()
+    {
+        var token = await RegisterAndGetTokenAsync("create@example.com");
+        SetBearerToken(token);
+
+        var response = await Client.PostAsJsonAsync("/api/todos", new CreateTodoRequest
+        {
+            Title = "New task",
+            Description = "Details"
+        });
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        var todo = await response.Content.ReadFromJsonAsync<TodoResponse>(JsonOptions);
+        Assert.NotNull(todo);
+        Assert.Equal("New task", todo!.Title);
+        Assert.Equal("Details", todo.Description);
+        Assert.False(todo.IsCompleted);
+    }
+
+    [Fact]
+    public async Task Filter_active_excludes_completed()
+    {
+        var token = await RegisterAndGetTokenAsync("filter@example.com");
+        SetBearerToken(token);
+
+        var activeResponse = await Client.PostAsJsonAsync("/api/todos", new CreateTodoRequest
+        {
+            Title = "Active task"
+        });
+        activeResponse.EnsureSuccessStatusCode();
+        var activeTodo = await activeResponse.Content.ReadFromJsonAsync<TodoResponse>(JsonOptions);
+
+        var completedResponse = await Client.PostAsJsonAsync("/api/todos", new CreateTodoRequest
+        {
+            Title = "Completed task"
+        });
+        completedResponse.EnsureSuccessStatusCode();
+        var completedTodo = await completedResponse.Content.ReadFromJsonAsync<TodoResponse>(JsonOptions);
+
+        await Client.PatchAsJsonAsync($"/api/todos/{completedTodo!.Id}", new PatchTodoRequest
+        {
+            IsCompleted = true
+        });
+
+        var listResponse = await Client.GetAsync("/api/todos?filter=active");
+        listResponse.EnsureSuccessStatusCode();
+
+        var todos = await listResponse.Content.ReadFromJsonAsync<List<TodoResponse>>(JsonOptions);
+        Assert.Single(todos!);
+        Assert.Equal(activeTodo!.Id, todos![0].Id);
+        Assert.False(todos[0].IsCompleted);
+    }
+
+    [Fact]
+    public async Task Patch_clearDueDate_removes_due_date()
+    {
+        var token = await RegisterAndGetTokenAsync("patch@example.com");
+        SetBearerToken(token);
+
+        var createResponse = await Client.PostAsJsonAsync("/api/todos", new CreateTodoRequest
+        {
+            Title = "Task with due date",
+            DueDate = DateTime.UtcNow.AddDays(3)
+        });
+        createResponse.EnsureSuccessStatusCode();
+
+        var created = await createResponse.Content.ReadFromJsonAsync<TodoResponse>(JsonOptions);
+        Assert.NotNull(created!.DueDate);
+
+        var patchResponse = await Client.PatchAsJsonAsync($"/api/todos/{created.Id}", new PatchTodoRequest
+        {
+            ClearDueDate = true
+        });
+        patchResponse.EnsureSuccessStatusCode();
+
+        var updated = await patchResponse.Content.ReadFromJsonAsync<TodoResponse>(JsonOptions);
+        Assert.NotNull(updated);
+        Assert.Null(updated!.DueDate);
+    }
+}
+
+file record MeResponse(string Id, string Email);
