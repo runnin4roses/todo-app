@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { SoundPreferenceProvider } from './context/SoundPreferenceContext';
 import { AuthForm } from './components/AuthForm';
 import { TodoApp } from './components/TodoApp';
 import { ClayBackground } from './components/ui/ClayBackground';
@@ -31,8 +32,10 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <ClayBackground />
-      <AppContent />
+      <SoundPreferenceProvider>
+        <ClayBackground />
+        <AppContent />
+      </SoundPreferenceProvider>
     </AuthProvider>
   );
 }

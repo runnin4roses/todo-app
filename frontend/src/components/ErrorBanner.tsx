@@ -1,9 +1,13 @@
+import { useButtonClickSound } from '../hooks/useButtonClickSound';
+
 interface ErrorBannerProps {
   message: string | null;
   onDismiss: () => void;
 }
 
 export function ErrorBanner({ message, onDismiss }: ErrorBannerProps) {
+  const { withClickSound } = useButtonClickSound();
+
   if (!message) {
     return null;
   }
@@ -16,7 +20,7 @@ export function ErrorBanner({ message, onDismiss }: ErrorBannerProps) {
       <span className="text-base font-medium leading-relaxed">{message}</span>
       <button
         type="button"
-        onClick={onDismiss}
+        onClick={withClickSound(onDismiss)}
         aria-label="Dismiss error"
         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border-0 bg-white/60 text-xl font-bold text-clay-danger-text transition-all duration-200 hover:-translate-y-0.5 hover:bg-white active:scale-95"
       >

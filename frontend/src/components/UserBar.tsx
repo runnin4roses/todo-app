@@ -1,6 +1,8 @@
 import { useAuth } from '../context/AuthContext';
+import { useSoundPreference } from '../context/SoundPreferenceContext';
+import { playButtonSound } from '../utils/sounds';
 import { Button } from './ui/Button';
-import { SignOutIcon } from './ui/Icons';
+import { SignOutIcon, VolumeOffIcon, VolumeOnIcon } from './ui/Icons';
 
 function getInitials(email: string) {
   const local = email.split('@')[0] ?? '';
@@ -15,6 +17,17 @@ function getInitials(email: string) {
 
 export function UserBar() {
   const { email, logout } = useAuth();
+  const { soundsEnabled, toggleSounds } = useSoundPreference();
+
+  function handleToggleSounds() {
+    if (!soundsEnabled) {
+      toggleSounds();
+      playButtonSound();
+      return;
+    }
+
+    toggleSounds();
+  }
 
   if (!email) {
     return null;
@@ -36,6 +49,21 @@ export function UserBar() {
             {email}
           </p>
         </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleToggleSounds}
+          aria-label={soundsEnabled ? 'Turn sounds off' : 'Turn sounds on'}
+          aria-pressed={soundsEnabled}
+          className={[
+            '!h-11 !w-11 !min-w-0 !px-0',
+            soundsEnabled
+              ? 'text-clay-accent hover:text-clay-accent'
+              : 'text-clay-muted hover:text-clay-foreground',
+          ].join(' ')}
+        >
+          {soundsEnabled ? <VolumeOnIcon /> : <VolumeOffIcon />}
+        </Button>
         <Button
           variant="ghost"
           size="sm"

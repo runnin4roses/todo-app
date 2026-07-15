@@ -1,4 +1,5 @@
 import { type ReactNode, useEffect, useRef } from 'react';
+import { useButtonClickSound } from '../hooks/useButtonClickSound';
 
 interface ModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export function Modal({
   children,
 }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const { withClickSound } = useButtonClickSound();
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -80,7 +82,7 @@ export function Modal({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={withClickSound(onClose)}
             aria-label="Close dialog"
             className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-xl border-0 bg-[#EFEBF5] text-lg font-bold leading-none text-clay-muted shadow-clay-pressed transition-all duration-200 hover:text-clay-foreground active:scale-95"
           >

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiError, api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useButtonClickSound } from '../hooks/useButtonClickSound';
 import type { Todo, TodoFilter } from '../types';
 import {
   buildTaskSummary,
@@ -17,6 +18,7 @@ import { PlusIcon } from './ui/Icons';
 
 export function TodoApp() {
   const { token, email } = useAuth();
+  const { withClickSound } = useButtonClickSound();
   const [todos, setTodos] = useState<Todo[]>([]);
   const [filter, setFilter] = useState<TodoFilter>('all');
   const [error, setError] = useState<string | null>(null);
@@ -174,7 +176,7 @@ export function TodoApp() {
                       ? 'bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white shadow-clay-button'
                       : 'bg-transparent text-clay-muted hover:text-clay-foreground',
                   ].join(' ')}
-                  onClick={() => setFilter(value)}
+                  onClick={withClickSound(() => setFilter(value))}
                 >
                   {value}
                 </button>
@@ -215,11 +217,12 @@ export function TodoApp() {
             </p>
           </div>
         ) : (
-          <div className="grid gap-4">
-            {filteredTodos.map((todo) => (
+          <div className="overflow-hidden rounded-[32px] bg-[#EFEBF5]/90 shadow-clay-pressed">
+            {filteredTodos.map((todo, index) => (
               <TodoItemCard
                 key={todo.id}
                 todo={todo}
+                isLast={index === filteredTodos.length - 1}
                 onToggle={handleToggle}
                 onUpdate={handleUpdate}
                 onDelete={handleDelete}

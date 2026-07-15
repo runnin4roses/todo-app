@@ -1,4 +1,7 @@
+import { useCallback, type MouseEvent } from 'react';
+import { useSoundPreference } from '../../context/SoundPreferenceContext';
 import type { ButtonHTMLAttributes } from 'react';
+import { playButtonSound } from '../../utils/sounds';
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
 type ButtonSize = 'sm' | 'default' | 'lg';
@@ -36,12 +39,27 @@ export function Button({
   disabled,
   type = 'button',
   children,
+  onClick,
   ...props
 }: ButtonProps) {
+  const { soundsEnabled } = useSoundPreference();
+
+  const handleClick = useCallback(
+    (event: MouseEvent<HTMLButtonElement>) => {
+      if (!disabled && soundsEnabled) {
+        playButtonSound();
+      }
+
+      onClick?.(event);
+    },
+    [disabled, onClick, soundsEnabled]
+  );
+
   return (
     <button
       type={type}
       disabled={disabled}
+      onClick={handleClick}
       className={[
         'inline-flex items-center justify-center rounded-[20px] border-0 font-bold tracking-wide transition-all duration-200',
         'hover:-translate-y-1 active:scale-[0.92] active:shadow-clay-pressed',
