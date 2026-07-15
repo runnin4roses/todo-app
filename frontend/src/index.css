@@ -119,12 +119,10 @@
 
 @keyframes todo-title-complete {
   0% {
-    opacity: 1;
     transform: translateX(0);
   }
 
   100% {
-    opacity: 0.72;
     transform: translateX(2px);
   }
 }
@@ -144,11 +142,11 @@
 }
 
 .todo-title-complete {
-  animation: todo-title-complete 0.42s ease-out forwards;
+  animation: todo-title-complete 0.42s ease-out;
 }
 
 .todo-row-complete {
-  animation: todo-row-settle 0.5s ease-out forwards;
+  animation: todo-row-settle 0.5s ease-out;
 }
 
 :root {

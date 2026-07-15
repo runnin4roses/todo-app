@@ -15,7 +15,7 @@ import { TodoForm } from './TodoForm';
 import { TodoItemCard } from './TodoItemCard';
 import { UserBar } from './UserBar';
 import { Button } from './ui/Button';
-import { PlusIcon } from './ui/Icons';
+import { PlusIcon, EditIcon } from './ui/Icons';
 
 export function TodoApp() {
   const { token, email } = useAuth();
@@ -25,6 +25,7 @@ export function TodoApp() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
 
   const loadTodos = useCallback(async () => {
     if (!token) {
@@ -96,6 +97,7 @@ export function TodoApp() {
 
     await api.patchTodo(token, todo.id, patch);
     await loadTodos();
+    setEditingTodo(null);
   }
 
   async function handleToggle(todo: Todo) {
@@ -208,7 +210,10 @@ export function TodoApp() {
               ))}
             </div>
             <Button
-              onClick={() => setIsAddModalOpen(true)}
+              onClick={() => {
+                setEditingTodo(null);
+                setIsAddModalOpen(true);
+              }}
               className="w-full gap-2 sm:w-auto"
             >
               <PlusIcon />
@@ -252,7 +257,10 @@ export function TodoApp() {
                 todo={todo}
                 isLast={index === filteredTodos.length - 1}
                 onToggle={handleToggle}
-                onUpdate={handleUpdate}
+                onEdit={(todo) => {
+                  setIsAddModalOpen(false);
+                  setEditingTodo(todo);
+                }}
                 onDelete={handleDelete}
               />
             ))}
@@ -273,6 +281,25 @@ export function TodoApp() {
           onSubmit={handleCreate}
           onCancel={() => setIsAddModalOpen(false)}
         />
+      </Modal>
+
+      <Modal
+        isOpen={editingTodo !== null}
+        onClose={() => setEditingTodo(null)}
+        title="Edit task"
+        description="Update the details for this task."
+        icon={<EditIcon className="h-5 w-5" />}
+      >
+        {editingTodo && (
+          <TodoForm
+            key={editingTodo.id}
+            variant="modal"
+            initial={editingTodo}
+            submitLabel="Save changes"
+            onSubmit={(values) => handleUpdate(editingTodo, values)}
+            onCancel={() => setEditingTodo(null)}
+          />
+        )}
       </Modal>
     </div>
   );

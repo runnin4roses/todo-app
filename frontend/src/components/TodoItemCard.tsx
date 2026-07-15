@@ -2,7 +2,6 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { useSoundPreference } from '../context/SoundPreferenceContext';
 import type { Todo } from '../types';
 import { playCompletionSound, playButtonSound } from '../utils/sounds';
-import { TodoForm } from './TodoForm';
 import { Button } from './ui/Button';
 import { EditIcon, TrashIcon } from './ui/Icons';
 
@@ -10,10 +9,7 @@ interface TodoItemCardProps {
   todo: Todo;
   isLast?: boolean;
   onToggle: (todo: Todo) => Promise<void>;
-  onUpdate: (
-    todo: Todo,
-    values: { title: string; description: string; dueDate: string }
-  ) => Promise<void>;
+  onEdit: (todo: Todo) => void;
   onDelete: (todo: Todo) => Promise<void>;
 }
 
@@ -33,12 +29,11 @@ export function TodoItemCard({
   todo,
   isLast = false,
   onToggle,
-  onUpdate,
+  onEdit,
   onDelete,
 }: TodoItemCardProps) {
   const checkboxId = useId();
   const { soundsEnabled } = useSoundPreference();
-  const [isEditing, setIsEditing] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
   const wasCompletedRef = useRef(todo.isCompleted);
@@ -85,25 +80,6 @@ export function TodoItemCard({
     } finally {
       setIsBusy(false);
     }
-  }
-
-  if (isEditing) {
-    return (
-      <article
-        data-todo-id={todo.id}
-        className="border-b border-white/50 bg-white/45 px-5 py-5 sm:px-6 sm:py-6"
-      >
-        <TodoForm
-          initial={todo}
-          submitLabel="Save changes"
-          onCancel={() => setIsEditing(false)}
-          onSubmit={async (values) => {
-            await onUpdate(todo, values);
-            setIsEditing(false);
-          }}
-        />
-      </article>
-    );
   }
 
   const dueDateLabel = formatDueDate(todo.dueDate);
@@ -173,7 +149,7 @@ export function TodoItemCard({
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => setIsEditing(true)}
+                onClick={() => onEdit(todo)}
                 disabled={isBusy}
                 aria-label={`Edit "${todo.title}"`}
                 className="!h-11 !w-11 !min-w-0 !px-0"
