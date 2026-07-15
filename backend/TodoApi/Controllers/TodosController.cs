@@ -85,8 +85,8 @@ public class TodosController(AppDbContext db) : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = todo.Id }, ToResponse(todo));
     }
 
-    [HttpPut("{id:int}")]
-    public async Task<ActionResult<TodoResponse>> Update(int id, UpdateTodoRequest request)
+    [HttpPatch("{id:int}")]
+    public async Task<ActionResult<TodoResponse>> Patch(int id, PatchTodoRequest request)
     {
         var todo = await FindOwnedTodo(id);
         if (todo is null)
@@ -94,22 +94,53 @@ public class TodosController(AppDbContext db) : ControllerBase
             return NotFound(new { message = "Todo not found." });
         }
 
-        if (string.IsNullOrWhiteSpace(request.Title))
+        var hasChange = request.Title is not null
+            || request.Description is not null
+            || request.DueDate is not null
+            || request.IsCompleted is not null
+            || request.ClearDueDate == true;
+
+        if (!hasChange)
         {
-            return BadRequest(new { message = "Title is required." });
+            return BadRequest(new { message = "At least one field is required." });
         }
 
-        if (request.DueDate.HasValue && request.DueDate.Value.Date < DateTime.UtcNow.Date)
+        if (request.Title is not null)
         {
-            return BadRequest(new { message = "Due date cannot be in the past." });
+            if (string.IsNullOrWhiteSpace(request.Title))
+            {
+                return BadRequest(new { message = "Title is required." });
+            }
+
+            todo.Title = request.Title.Trim();
         }
 
-        todo.Title = request.Title.Trim();
-        todo.Description = string.IsNullOrWhiteSpace(request.Description)
-            ? null
-            : request.Description.Trim();
-        todo.DueDate = request.DueDate;
-        todo.IsCompleted = request.IsCompleted;
+        if (request.Description is not null)
+        {
+            todo.Description = string.IsNullOrWhiteSpace(request.Description)
+                ? null
+                : request.Description.Trim();
+        }
+
+        if (request.ClearDueDate == true)
+        {
+            todo.DueDate = null;
+        }
+        else if (request.DueDate is not null)
+        {
+            if (request.DueDate.Value.Date < DateTime.UtcNow.Date)
+            {
+                return BadRequest(new { message = "Due date cannot be in the past." });
+            }
+
+            todo.DueDate = request.DueDate;
+        }
+
+        if (request.IsCompleted is not null)
+        {
+            todo.IsCompleted = request.IsCompleted.Value;
+        }
+
         todo.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync();

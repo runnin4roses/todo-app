@@ -15,19 +15,20 @@ public record CreateTodoRequest
     public DateTime? DueDate { get; init; }
 }
 
-public record UpdateTodoRequest
+public record PatchTodoRequest
 {
-    [Required]
     [MinLength(1)]
     [MaxLength(200)]
-    public required string Title { get; init; }
+    public string? Title { get; init; }
 
     [MaxLength(2000)]
     public string? Description { get; init; }
 
     public DateTime? DueDate { get; init; }
 
-    public bool IsCompleted { get; init; }
+    public bool? IsCompleted { get; init; }
+
+    public bool? ClearDueDate { get; init; }
 }
 
 public record TodoResponse
