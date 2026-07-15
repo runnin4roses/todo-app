@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+frontend/dist/
+
+# .NET
+backend/**/bin/
+backend/**/obj/
+backend/TodoApi/todos.db
+backend/TodoApi/todos.db-wal
+backend/TodoApi/todos.db-shm
+
+# Environment
+.env.local
+.env.*.local
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
