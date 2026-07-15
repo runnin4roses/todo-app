@@ -9,7 +9,9 @@ import {
   getTimeGreeting,
 } from '../utils/greeting';
 import { sortTodos, useTodoListFlip } from '../utils/sortTodos';
+import { getDueDateUrgency } from '../utils/dueDate';
 import { ErrorBanner } from './ErrorBanner';
+import { DueDateLegend } from './DueDateLegend';
 import { Modal } from './Modal';
 import { TodoForm } from './TodoForm';
 import { TodoItemCard } from './TodoItemCard';
@@ -161,6 +163,25 @@ export function TodoApp() {
 
   const listFlipRef = useTodoListFlip(filteredTodos.map((todo) => todo.id));
 
+  const showDueTodayLegend = filteredTodos.some(
+    (todo) =>
+      !todo.isCompleted &&
+      todo.dueDate &&
+      getDueDateUrgency(todo.dueDate) === 'today'
+  );
+  const showDueTomorrowLegend = filteredTodos.some(
+    (todo) =>
+      !todo.isCompleted &&
+      todo.dueDate &&
+      getDueDateUrgency(todo.dueDate) === 'tomorrow'
+  );
+  const showDueThisWeekLegend = filteredTodos.some(
+    (todo) =>
+      !todo.isCompleted &&
+      todo.dueDate &&
+      getDueDateUrgency(todo.dueDate) === 'thisWeek'
+  );
+
   const greeting = email ? getTimeGreeting() : '';
   const displayName = email ? getDisplayName(email) : '';
   const taskSummary = buildTaskSummary(activeTodos);
@@ -247,10 +268,16 @@ export function TodoApp() {
             </p>
           </div>
         ) : (
-          <div
-            ref={listFlipRef}
-            className="overflow-hidden rounded-[32px] bg-[#EFEBF5]/90 shadow-clay-pressed"
-          >
+          <>
+            <DueDateLegend
+              showToday={showDueTodayLegend}
+              showTomorrow={showDueTomorrowLegend}
+              showThisWeek={showDueThisWeekLegend}
+            />
+            <div
+              ref={listFlipRef}
+              className="overflow-hidden rounded-[32px] bg-[#EFEBF5]/90 shadow-clay-pressed"
+            >
             {filteredTodos.map((todo, index) => (
               <TodoItemCard
                 key={todo.id}
@@ -264,7 +291,8 @@ export function TodoApp() {
                 onDelete={handleDelete}
               />
             ))}
-          </div>
+            </div>
+          </>
         )}
       </section>
 

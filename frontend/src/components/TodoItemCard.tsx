@@ -1,7 +1,12 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useSoundPreference } from '../context/SoundPreferenceContext';
 import type { Todo } from '../types';
+import {
+  formatDueDateDisplay,
+  shouldShowDueIndicator,
+} from '../utils/dueDate';
 import { playCompletionSound, playButtonSound } from '../utils/sounds';
+import { DueDateIndicator } from './DueDateIndicator';
 import { Button } from './ui/Button';
 import { EditIcon, TrashIcon } from './ui/Icons';
 
@@ -11,18 +16,6 @@ interface TodoItemCardProps {
   onToggle: (todo: Todo) => Promise<void>;
   onEdit: (todo: Todo) => void;
   onDelete: (todo: Todo) => Promise<void>;
-}
-
-function formatDueDate(value: string | null) {
-  if (!value) {
-    return null;
-  }
-
-  return new Date(value).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
 }
 
 export function TodoItemCard({
@@ -82,7 +75,7 @@ export function TodoItemCard({
     }
   }
 
-  const dueDateLabel = formatDueDate(todo.dueDate);
+  const dueDateDisplay = formatDueDateDisplay(todo.dueDate);
 
   return (
     <article
@@ -96,7 +89,16 @@ export function TodoItemCard({
         .filter(Boolean)
         .join(' ')}
     >
-      <div className="flex items-start gap-4">
+      <div className="flex items-start gap-3 sm:gap-4">
+        <div className="flex w-5 shrink-0 items-center justify-center pt-1.5 sm:w-6">
+          {dueDateDisplay && shouldShowDueIndicator(dueDateDisplay.urgency) && (
+            <DueDateIndicator
+              urgency={dueDateDisplay.urgency}
+              isCompleted={todo.isCompleted}
+            />
+          )}
+        </div>
+
         <label
           htmlFor={checkboxId}
           className="relative mt-0.5 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center"
@@ -185,19 +187,6 @@ export function TodoItemCard({
                 {todo.description}
               </p>
             </label>
-          )}
-
-          {dueDateLabel && (
-            <span
-              className={[
-                'mt-3 inline-flex items-center rounded-full px-4 py-1.5 text-sm font-bold tracking-wide transition-colors duration-300',
-                todo.isCompleted
-                  ? 'bg-white/50 text-clay-muted'
-                  : 'bg-clay-accent/10 text-clay-accent',
-              ].join(' ')}
-            >
-              Due {dueDateLabel}
-            </span>
           )}
         </div>
       </div>

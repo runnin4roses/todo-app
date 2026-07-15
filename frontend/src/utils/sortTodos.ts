@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef } from 'react';
 import type { Todo } from '../types';
+import { compareTodosByDueDate } from './dueDate';
 
 const FLIP_DURATION_MS = 500;
 const FLIP_EASING = 'cubic-bezier(0.22, 1, 0.36, 1)';
@@ -10,9 +11,7 @@ export function sortTodos(todos: Todo[]) {
       return a.isCompleted ? 1 : -1;
     }
 
-    return (
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    return compareTodosByDueDate(a, b);
   });
 }
 
