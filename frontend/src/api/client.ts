@@ -95,6 +95,10 @@ export const api = {
     return request<Todo[]>(`/api/todos${query}`, {}, token);
   },
 
+  getTodo(token: string, id: number) {
+    return request<Todo>(`/api/todos/${id}`, {}, token);
+  },
+
   createTodo(token: string, input: CreateTodoInput) {
     return request<Todo>(
       '/api/todos',

@@ -73,6 +73,26 @@ export function TodoApp() {
     setIsAddModalOpen(false);
   }
 
+  async function handleEdit(todo: Todo) {
+    if (!token) {
+      return;
+    }
+
+    setIsAddModalOpen(false);
+    setError(null);
+
+    try {
+      const freshTodo = await api.getTodo(token, todo.id);
+      setEditingTodo(freshTodo);
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : 'Unable to load task for editing. Please try again.';
+      setError(message);
+    }
+  }
+
   async function handleUpdate(
     todo: Todo,
     values: { title: string; description: string; dueDate: string }
@@ -292,10 +312,7 @@ export function TodoApp() {
                 todo={todo}
                 isLast={index === filteredTodos.length - 1}
                 onToggle={handleToggle}
-                onEdit={(todo) => {
-                  setIsAddModalOpen(false);
-                  setEditingTodo(todo);
-                }}
+                onEdit={handleEdit}
                 onDelete={handleDelete}
               />
             ))}
