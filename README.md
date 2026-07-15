@@ -1,6 +1,8 @@
 # Todo App
 
 This is a very simple, but fun to use To-Do list app. Users can create an account, login, and create, edit, or delete to-do items. Emphasis is definitely on to-do items that are due shortly. Data persists in SQLite across restarts.
+<img width="1952" height="1586" alt="image" src="https://github.com/user-attachments/assets/23ae155a-5ad7-4bf5-8b50-b2571d2fc3d7" />
+
 
 ## What I Built
 
@@ -77,9 +79,9 @@ dotnet test
 | DELETE | `/api/todos/{id}`                          | Yes  | Delete todo (owned only)            |
 | GET    | `/health`                                  | No   | Health check (returns `Healthy`)    |
 
-## Assumptions and Trade-offs
+## Assumptions, Limitations, and Trade-offs
 
-**Authentication:** Implemented with JWT. Every todo query filters by `UserId` from the token. User A cannot read, update, or delete User B's todos (covered by tests).
+**Authentication:** While Authentication was not listed in the MVP requirements, I am making an assumption that users only want to view their own to-do items, and do not want anyone else viewing them. Every todo query filters by `UserId` from a JWT token. User A cannot read, update, or delete User B's todos (covered by tests).
 
 **Architecture:** One API project, and controllers talk directly to EF Core. So there is no repository layer - I thought this app was simple enough that that would be unnecessary.
 
@@ -89,7 +91,7 @@ dotnet test
 
 **Validation:** Server-side is the source of truth. Frontend mirrors key rules (required title, no past due dates) for faster feedback. Due dates are compared as calendar dates (UTC on the server, local date in the browser).
 
-**Filtering:** The API supports `?filter=active|completed`, but the frontend filters client-side for instant tab switching. Server-side filtering is ready for when pagination is added.
+**Filtering:** The API supports `?filter=active|completed`, but the frontend filters client-side for instant tab switching (originally I thought I would use the server-side filtering, but opted not to). Server-side filtering is ready for when pagination is added.
 
 **Scalability:** This MVP targets single-instance deployment with SQLite — fine for low traffic. The main limits are SQLite (no multi-instance writes), unpaginated list endpoints (the API returns a user's full todo list per request), and full-list refetches on the frontend after create/edit/delete. JWT auth is stateless, so horizontal API scaling is viable once the database moves to PostgreSQL. Per-user query scoping and the `?filter=` param are deliberate hooks for pagination and larger datasets.
 
@@ -102,6 +104,8 @@ dotnet test
 - User-selectable sort order — the list auto-sorts by due-date urgency and completed items
 - Frontend tests — prioritized backend integration tests
 - Overdue task highlighting — due-date indicators exist for today/tomorrow/this week, but not past-due
+- Archive or handling of "stale" old completed to-do items so they don't appear in the UI forever.
+- Additional properties such as priority, tags, groups
 
 ## What I'd Add Next
 
