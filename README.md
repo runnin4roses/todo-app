@@ -91,6 +91,8 @@ dotnet test
 
 **Filtering:** The API supports `?filter=active|completed`, but the frontend filters client-side for instant tab switching. Server-side filtering is ready for when pagination is added.
 
+**Scalability:** This MVP targets single-instance deployment with SQLite — fine for low traffic. The main limits are SQLite (no multi-instance writes), unpaginated list endpoints (the API returns a user's full todo list per request), and full-list refetches on the frontend after create/edit/delete. JWT auth is stateless, so horizontal API scaling is viable once the database moves to PostgreSQL. Per-user query scoping and the `?filter=` param are deliberate hooks for pagination and larger datasets.
+
 **Deliberately left out**:
 
 - Refresh tokens, password reset, and email verification — simple JWT register/login was sufficient for MVP
