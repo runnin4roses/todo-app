@@ -1,6 +1,18 @@
-import type { AuthResponse, CreateTodoInput, PatchTodoInput, Todo } from '../types';
+import type {
+  AuthResponse,
+  AuthUser,
+  CreateTodoInput,
+  PatchTodoInput,
+  Todo,
+} from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:5280';
+
+let onUnauthorized: (() => void) | null = null;
+
+export function setUnauthorizedHandler(handler: (() => void) | null) {
+  onUnauthorized = handler;
+}
 
 export class ApiError extends Error {
   status: number;
@@ -44,6 +56,11 @@ async function request<T>(
     } catch {
       // Use default message when response body is not JSON.
     }
+
+    if (response.status === 401 && token) {
+      onUnauthorized?.();
+    }
+
     throw new ApiError(message, response.status);
   }
 
@@ -67,6 +84,10 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
+  },
+
+  me(token: string) {
+    return request<AuthUser>('/api/auth/me', {}, token);
   },
 
   getTodos(token: string, filter?: string) {
