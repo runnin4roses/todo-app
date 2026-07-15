@@ -89,7 +89,10 @@ export function TodoItemCard({
 
   if (isEditing) {
     return (
-      <article className="border-b border-white/50 bg-white/45 px-5 py-5 sm:px-6 sm:py-6">
+      <article
+        data-todo-id={todo.id}
+        className="border-b border-white/50 bg-white/45 px-5 py-5 sm:px-6 sm:py-6"
+      >
         <TodoForm
           initial={todo}
           submitLabel="Save changes"
@@ -107,6 +110,7 @@ export function TodoItemCard({
 
   return (
     <article
+      data-todo-id={todo.id}
       className={[
         'group relative px-5 py-4 transition-colors duration-300 sm:px-6 sm:py-5',
         !isLast ? 'border-b border-white/50' : '',

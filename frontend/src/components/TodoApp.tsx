@@ -8,6 +8,7 @@ import {
   getDisplayName,
   getTimeGreeting,
 } from '../utils/greeting';
+import { sortTodos, useTodoListFlip } from '../utils/sortTodos';
 import { ErrorBanner } from './ErrorBanner';
 import { Modal } from './Modal';
 import { TodoForm } from './TodoForm';
@@ -35,7 +36,7 @@ export function TodoApp() {
 
     try {
       const data = await api.getTodos(token);
-      setTodos(data);
+      setTodos(sortTodos(data));
     } catch (err) {
       const message =
         err instanceof ApiError
@@ -102,10 +103,30 @@ export function TodoApp() {
       return;
     }
 
-    await api.patchTodo(token, todo.id, {
-      isCompleted: !todo.isCompleted,
-    });
-    await loadTodos();
+    const previousTodos = todos;
+
+    setTodos((current) =>
+      sortTodos(
+        current.map((item) =>
+          item.id === todo.id
+            ? { ...item, isCompleted: !item.isCompleted }
+            : item
+        )
+      )
+    );
+
+    try {
+      await api.patchTodo(token, todo.id, {
+        isCompleted: !todo.isCompleted,
+      });
+    } catch (err) {
+      setTodos(previousTodos);
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : 'Unable to update task. Please try again.';
+      setError(message);
+    }
   }
 
   async function handleDelete(todo: Todo) {
@@ -123,16 +144,20 @@ export function TodoApp() {
   );
 
   const filteredTodos = useMemo(() => {
+    let list: Todo[];
+
     if (filter === 'active') {
-      return activeTodos;
+      list = todos.filter((todo) => !todo.isCompleted);
+    } else if (filter === 'completed') {
+      list = todos.filter((todo) => todo.isCompleted);
+    } else {
+      list = todos;
     }
 
-    if (filter === 'completed') {
-      return todos.filter((todo) => todo.isCompleted);
-    }
+    return sortTodos(list);
+  }, [todos, filter]);
 
-    return todos;
-  }, [todos, activeTodos, filter]);
+  const listFlipRef = useTodoListFlip(filteredTodos.map((todo) => todo.id));
 
   const greeting = email ? getTimeGreeting() : '';
   const displayName = email ? getDisplayName(email) : '';
@@ -217,7 +242,10 @@ export function TodoApp() {
             </p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-[32px] bg-[#EFEBF5]/90 shadow-clay-pressed">
+          <div
+            ref={listFlipRef}
+            className="overflow-hidden rounded-[32px] bg-[#EFEBF5]/90 shadow-clay-pressed"
+          >
             {filteredTodos.map((todo, index) => (
               <TodoItemCard
                 key={todo.id}
