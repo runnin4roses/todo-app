@@ -13,16 +13,17 @@ namespace TodoApi.Controllers;
 [Authorize]
 public class TodosController(AppDbContext db) : ControllerBase
 {
-    private int CurrentUserId =>
-        int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? throw new UnauthorizedAccessException("User is not authenticated."));
-
     [HttpGet]
     public async Task<ActionResult<IEnumerable<TodoResponse>>> GetAll(
         [FromQuery] string? filter = null)
     {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return Unauthorized(new { message = "User is not authenticated." });
+        }
+
         var query = db.TodoItems
-            .Where(t => t.UserId == CurrentUserId)
+            .Where(t => t.UserId == userId)
             .AsQueryable();
 
         query = filter?.ToLowerInvariant() switch
@@ -43,7 +44,12 @@ public class TodosController(AppDbContext db) : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<ActionResult<TodoResponse>> GetById(int id)
     {
-        var todo = await FindOwnedTodo(id);
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return Unauthorized(new { message = "User is not authenticated." });
+        }
+
+        var todo = await FindOwnedTodo(id, userId);
         if (todo is null)
         {
             return NotFound(new { message = "Todo not found." });
@@ -55,6 +61,11 @@ public class TodosController(AppDbContext db) : ControllerBase
     [HttpPost]
     public async Task<ActionResult<TodoResponse>> Create(CreateTodoRequest request)
     {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return Unauthorized(new { message = "User is not authenticated." });
+        }
+
         if (string.IsNullOrWhiteSpace(request.Title))
         {
             return BadRequest(new { message = "Title is required." });
@@ -76,7 +87,7 @@ public class TodosController(AppDbContext db) : ControllerBase
             IsCompleted = false,
             CreatedAt = now,
             UpdatedAt = now,
-            UserId = CurrentUserId
+            UserId = userId
         };
 
         db.TodoItems.Add(todo);
@@ -88,7 +99,12 @@ public class TodosController(AppDbContext db) : ControllerBase
     [HttpPatch("{id:int}")]
     public async Task<ActionResult<TodoResponse>> Patch(int id, PatchTodoRequest request)
     {
-        var todo = await FindOwnedTodo(id);
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return Unauthorized(new { message = "User is not authenticated." });
+        }
+
+        var todo = await FindOwnedTodo(id, userId);
         if (todo is null)
         {
             return NotFound(new { message = "Todo not found." });
@@ -150,7 +166,12 @@ public class TodosController(AppDbContext db) : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var todo = await FindOwnedTodo(id);
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return Unauthorized(new { message = "User is not authenticated." });
+        }
+
+        var todo = await FindOwnedTodo(id, userId);
         if (todo is null)
         {
             return NotFound(new { message = "Todo not found." });
@@ -161,8 +182,20 @@ public class TodosController(AppDbContext db) : ControllerBase
         return NoContent();
     }
 
-    private async Task<TodoItem?> FindOwnedTodo(int id) =>
-        await db.TodoItems.FirstOrDefaultAsync(t => t.Id == id && t.UserId == CurrentUserId);
+    private bool TryGetCurrentUserId(out int userId)
+    {
+        var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (claim is null || !int.TryParse(claim, out userId))
+        {
+            userId = 0;
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task<TodoItem?> FindOwnedTodo(int id, int userId) =>
+        await db.TodoItems.FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
 
     private static TodoResponse ToResponse(TodoItem todo) => new()
     {
