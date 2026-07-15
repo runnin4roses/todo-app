@@ -1,34 +1,45 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "./assets/vite.svg";
-import "./App.css";
+import { useState } from 'react';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthForm } from './components/AuthForm';
+import './App.css';
+
+function AppContent() {
+  const { isAuthenticated, email, logout } = useAuth();
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+
+  if (!isAuthenticated) {
+    return (
+      <main className="auth-layout">
+        <AuthForm
+          mode={authMode}
+          onToggleMode={() =>
+            setAuthMode((current) => (current === 'login' ? 'register' : 'login'))
+          }
+        />
+      </main>
+    );
+  }
+
+  return (
+    <main className="signed-in-layout">
+      <div className="auth-card">
+        <h1>Signed in</h1>
+        <p className="subtitle">Welcome back, {email}.</p>
+        <p className="subtitle">Todo UI coming in the next commit.</p>
+        <button type="button" onClick={logout}>
+          Sign out
+        </button>
+      </div>
+    </main>
+  );
+}
 
 function App() {
-	const [count, setCount] = useState(0);
-
-	return (
-		<>
-			<div>
-				<a href="https://vite.dev" target="_blank">
-					<img src={viteLogo} className="logo" alt="Vite logo" />
-				</a>
-				<a href="https://react.dev" target="_blank">
-					<img
-						src={reactLogo}
-						className="logo react"
-						alt="React logo"
-					/>
-				</a>
-			</div>
-			<h1>Todo App</h1>
-			<div className="card">
-				<button onClick={() => setCount((count) => count + 1)}>
-					count is {count}
-				</button>
-				<p>Frontend is running. API setup is in progress.</p>
-			</div>
-		</>
-	);
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
 }
 
 export default App;
