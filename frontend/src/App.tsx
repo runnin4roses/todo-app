@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AuthForm } from './components/AuthForm';
 import { TodoApp } from './components/TodoApp';
-import './App.css';
+import { ClayBackground } from './components/ui/ClayBackground';
 
 function AppContent() {
   const { isAuthenticated } = useAuth();
@@ -10,7 +10,7 @@ function AppContent() {
 
   if (!isAuthenticated) {
     return (
-      <main className="auth-layout">
+      <main className="relative grid min-h-screen place-items-center px-4 py-8 sm:px-6">
         <AuthForm
           mode={authMode}
           onToggleMode={() =>
@@ -22,7 +22,7 @@ function AppContent() {
   }
 
   return (
-    <main>
+    <main className="relative mx-auto max-w-3xl px-4 py-8 pb-12 sm:px-6 md:py-12 lg:py-16">
       <TodoApp />
     </main>
   );
@@ -31,6 +31,7 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
+      <ClayBackground />
       <AppContent />
     </AuthProvider>
   );

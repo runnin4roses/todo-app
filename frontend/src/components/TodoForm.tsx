@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useState } from 'react';
 import type { Todo } from '../types';
+import { Button } from './ui/Button';
 
 interface TodoFormProps {
   initial?: Todo | null;
@@ -66,9 +67,14 @@ export function TodoForm({
   }
 
   return (
-    <form className="todo-form" onSubmit={handleSubmit}>
-      <div className="form-row">
-        <label htmlFor="title">Title</label>
+    <form className="grid gap-5" onSubmit={handleSubmit}>
+      <div className="grid gap-2">
+        <label
+          htmlFor="title"
+          className="font-nunito text-sm font-bold tracking-wide text-clay-foreground"
+        >
+          Title
+        </label>
         <input
           id="title"
           value={title}
@@ -76,11 +82,17 @@ export function TodoForm({
           placeholder="What needs to be done?"
           maxLength={200}
           required
+          className="clay-input"
         />
       </div>
 
-      <div className="form-row">
-        <label htmlFor="description">Description</label>
+      <div className="grid gap-2">
+        <label
+          htmlFor="description"
+          className="font-nunito text-sm font-bold tracking-wide text-clay-foreground"
+        >
+          Description
+        </label>
         <textarea
           id="description"
           value={description}
@@ -88,29 +100,45 @@ export function TodoForm({
           placeholder="Optional details"
           rows={3}
           maxLength={2000}
+          className="clay-textarea"
         />
       </div>
 
-      <div className="form-row">
-        <label htmlFor="dueDate">Due date</label>
+      <div className="grid gap-2">
+        <label
+          htmlFor="dueDate"
+          className="font-nunito text-sm font-bold tracking-wide text-clay-foreground"
+        >
+          Due date
+        </label>
         <input
           id="dueDate"
           type="date"
           value={dueDate}
           onChange={(event) => setDueDate(event.target.value)}
+          className="clay-input"
         />
       </div>
 
-      {error && <p className="field-error">{error}</p>}
+      {error && (
+        <p className="m-0 rounded-[20px] bg-clay-danger-light px-4 py-3 text-sm font-medium text-clay-danger-text">
+          {error}
+        </p>
+      )}
 
-      <div className="form-actions">
-        <button type="submit" disabled={isSubmitting}>
+      <div className="mt-2 flex flex-col gap-3 sm:flex-row">
+        <Button type="submit" disabled={isSubmitting} className="sm:flex-1">
           {isSubmitting ? 'Saving...' : submitLabel}
-        </button>
+        </Button>
         {onCancel && (
-          <button type="button" className="secondary" onClick={onCancel}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onCancel}
+            className="sm:flex-1"
+          >
             Cancel
-          </button>
+          </Button>
         )}
       </div>
     </form>
