@@ -65,17 +65,17 @@ dotnet test
 
 ## API Overview
 
-| Method | Endpoint                                   | Auth | Description                          |
-| ------ | ------------------------------------------ | ---- | ------------------------------------ |
-| POST   | `/api/auth/register`                       | No   | Create account, returns JWT (`201`)  |
-| POST   | `/api/auth/login`                          | No   | Sign in, returns JWT                 |
-| GET    | `/api/auth/me`                             | Yes  | Current user info                    |
-| GET    | `/api/todos?filter=all\|active\|completed` | Yes  | List user's todos                    |
-| GET    | `/api/todos/{id}`                          | Yes  | Get one todo (owned only)            |
-| POST   | `/api/todos`                               | Yes  | Create todo (`201`)                  |
-| PATCH  | `/api/todos/{id}`                          | Yes  | Partial update (owned only)          |
-| DELETE | `/api/todos/{id}`                          | Yes  | Delete todo (owned only)             |
-| GET    | `/health`                                  | No   | Health check (returns `Healthy`)     |
+| Method | Endpoint                                   | Auth | Description                         |
+| ------ | ------------------------------------------ | ---- | ----------------------------------- |
+| POST   | `/api/auth/register`                       | No   | Create account, returns JWT (`201`) |
+| POST   | `/api/auth/login`                          | No   | Sign in, returns JWT                |
+| GET    | `/api/auth/me`                             | Yes  | Current user info                   |
+| GET    | `/api/todos?filter=all\|active\|completed` | Yes  | List user's todos                   |
+| GET    | `/api/todos/{id}`                          | Yes  | Get one todo (owned only)           |
+| POST   | `/api/todos`                               | Yes  | Create todo (`201`)                 |
+| PATCH  | `/api/todos/{id}`                          | Yes  | Partial update (owned only)         |
+| DELETE | `/api/todos/{id}`                          | Yes  | Delete todo (owned only)            |
+| GET    | `/health`                                  | No   | Health check (returns `Healthy`)    |
 
 ## Assumptions and Trade-offs
 
@@ -91,27 +91,26 @@ dotnet test
 
 **Filtering:** The API supports `?filter=active|completed`, but the frontend filters client-side for instant tab switching. Server-side filtering is ready for when pagination is added.
 
-**Deliberately left out:**
+**Deliberately left out**:
 
-- Refresh tokens
-- Password reset/Forgot password
-- Pagination (ideally server-side for scalability)
-- CI/CD or containerization for running an actual sql server
-- Email verification
-- Role-based access (only user-owned data matters here)
-- User-selectable sort order (list auto-sorts by due-date urgency and completed items)
+- Refresh tokens, password reset, and email verification — simple JWT register/login was sufficient for MVP
+- Pagination — list sizes don't require it yet; the API `?filter=` param is ready when needed
+- CI/CD and containerization
+- Role-based access beyond per-user todo scoping
+- User-selectable sort order — the list auto-sorts by due-date urgency and completed items
+- Frontend tests — prioritized backend integration tests
+- Overdue task highlighting — due-date indicators exist for today/tomorrow/this week, but not past-due
 
 ## What I'd Add Next
 
-With another day:
+Production hardening and follow-on work:
 
-- Refresh tokens and secure httpOnly cookie option
-- Pagination and sorting on the todo list
-- Due-date reminders and overdue highlighting
 - EF Core migrations instead of `EnsureCreated()`
-- Frontend tests for critical flows (auth + todo CRUD)
-- Rate limiting on auth endpoints
-- Structured logging
+- Structured logging beyond the `/health` endpoint
+- Rate limiting and httpOnly cookie option for auth endpoints
+- PostgreSQL when moving beyond single-instance SQLite
+- Frontend tests for auth and todo CRUD flows
+- Due-date reminders (e.g. email or push notifications)
 
 ## Project Structure
 
