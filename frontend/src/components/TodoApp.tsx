@@ -138,8 +138,16 @@ export function TodoApp() {
       return;
     }
 
-    await api.deleteTodo(token, todo.id);
-    await loadTodos();
+    try {
+      await api.deleteTodo(token, todo.id);
+      await loadTodos();
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : 'Unable to delete task. Please try again.';
+      setError(message);
+    }
   }
 
   const activeTodos = useMemo(
