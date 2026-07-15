@@ -130,22 +130,42 @@ export function TodoItemCard({
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start gap-3">
-            <label
-              htmlFor={checkboxId}
-              className="min-w-0 flex-1 cursor-pointer"
-            >
-              <h3
-                className={[
-                  'font-nunito m-0 text-xl font-bold leading-snug tracking-tight transition-all duration-300',
-                  todo.isCompleted
-                    ? 'text-clay-muted line-through decoration-2 decoration-clay-muted/60'
-                    : 'text-clay-foreground',
-                  isCompleting ? 'todo-title-complete' : '',
-                ].join(' ')}
+            <div className="min-w-0 flex-1">
+              <label
+                htmlFor={checkboxId}
+                className="block cursor-pointer"
               >
-                {todo.title}
-              </h3>
-            </label>
+                <h3
+                  className={[
+                    'font-nunito m-0 text-xl font-bold leading-snug tracking-tight transition-all duration-300',
+                    todo.isCompleted
+                      ? 'text-clay-muted line-through decoration-2 decoration-clay-muted/60'
+                      : 'text-clay-foreground',
+                    isCompleting ? 'todo-title-complete' : '',
+                  ].join(' ')}
+                >
+                  {todo.title}
+                </h3>
+              </label>
+
+              {todo.description && (
+                <label
+                  htmlFor={checkboxId}
+                  className="mt-0.5 block cursor-pointer"
+                >
+                  <p
+                    className={[
+                      'm-0 text-base font-medium leading-snug transition-all duration-300',
+                      todo.isCompleted
+                        ? 'text-clay-muted/80 line-through decoration-clay-muted/40'
+                        : 'text-clay-muted',
+                    ].join(' ')}
+                  >
+                    {todo.description}
+                  </p>
+                </label>
+              )}
+            </div>
 
             <div className="flex shrink-0 gap-2 opacity-100 transition-opacity duration-200 sm:opacity-70 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
               <Button
@@ -170,24 +190,6 @@ export function TodoItemCard({
               </Button>
             </div>
           </div>
-
-          {todo.description && (
-            <label
-              htmlFor={checkboxId}
-              className="mt-2 block cursor-pointer"
-            >
-              <p
-                className={[
-                  'm-0 text-base font-medium leading-relaxed transition-all duration-300',
-                  todo.isCompleted
-                    ? 'text-clay-muted/80 line-through decoration-clay-muted/40'
-                    : 'text-clay-muted',
-                ].join(' ')}
-              >
-                {todo.description}
-              </p>
-            </label>
-          )}
         </div>
       </div>
     </article>

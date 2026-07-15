@@ -7,6 +7,41 @@ export interface DueDateDisplay {
   urgency: DueDateUrgency;
 }
 
+function toDateString(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function getDateStringFromOffset(offsetDays: number, from = new Date()) {
+  const date = new Date(from);
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + offsetDays);
+  return toDateString(date);
+}
+
+export const DUE_DATE_QUICK_OPTIONS = [
+  { urgency: 'today' as const, label: 'Today', offsetDays: 0 },
+  { urgency: 'tomorrow' as const, label: 'Tomorrow', offsetDays: 1 },
+  { urgency: 'thisWeek' as const, label: 'In one week', offsetDays: 7 },
+] as const;
+
+export function getActiveQuickDueOption(dueDate: string, now = new Date()) {
+  if (!dueDate) {
+    return null;
+  }
+
+  const normalized = dueDate.slice(0, 10);
+
+  return (
+    DUE_DATE_QUICK_OPTIONS.find(
+      (option) =>
+        getDateStringFromOffset(option.offsetDays, now) === normalized
+    )?.urgency ?? null
+  );
+}
+
 function daysUntilDue(dueDate: string, now = new Date()) {
   const due = new Date(`${dueDate.slice(0, 10)}T00:00:00`);
   const today = new Date(now);

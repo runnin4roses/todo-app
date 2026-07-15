@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useState } from 'react';
 import type { Todo } from '../types';
+import { DueDatePicker } from './DueDatePicker';
 import { Button } from './ui/Button';
 
 interface TodoFormProps {
@@ -113,20 +114,25 @@ export function TodoForm({
         </div>
 
         <div className="grid gap-2">
-          <label
-            htmlFor="dueDate"
-            className="font-nunito text-sm font-bold tracking-wide text-clay-foreground"
-          >
+          <span className="font-nunito text-sm font-bold tracking-wide text-clay-foreground">
             Due date
             <span className="ml-1 font-medium text-clay-muted">(optional)</span>
-          </label>
-          <input
-            id="dueDate"
-            type="date"
-            value={dueDate}
-            onChange={(event) => setDueDate(event.target.value)}
-            className={inputClass}
-          />
+          </span>
+          {isModal ? (
+            <DueDatePicker
+              value={dueDate}
+              onChange={setDueDate}
+              inputClass={inputClass}
+            />
+          ) : (
+            <input
+              id="dueDate"
+              type="date"
+              value={dueDate}
+              onChange={(event) => setDueDate(event.target.value)}
+              className={inputClass}
+            />
+          )}
         </div>
       </div>
 
