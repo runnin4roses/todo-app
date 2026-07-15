@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AuthForm } from './components/AuthForm';
+import { TodoApp } from './components/TodoApp';
 import './App.css';
 
 function AppContent() {
-  const { isAuthenticated, email, logout } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
 
   if (!isAuthenticated) {
@@ -21,15 +22,8 @@ function AppContent() {
   }
 
   return (
-    <main className="signed-in-layout">
-      <div className="auth-card">
-        <h1>Signed in</h1>
-        <p className="subtitle">Welcome back, {email}.</p>
-        <p className="subtitle">Todo UI coming in the next commit.</p>
-        <button type="button" onClick={logout}>
-          Sign out
-        </button>
-      </div>
+    <main>
+      <TodoApp />
     </main>
   );
 }
