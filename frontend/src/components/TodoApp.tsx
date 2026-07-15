@@ -1,15 +1,22 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiError, api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import type { Todo, TodoFilter } from '../types';
+import {
+  buildTaskSummary,
+  getDisplayName,
+  getTimeGreeting,
+} from '../utils/greeting';
 import { ErrorBanner } from './ErrorBanner';
 import { Modal } from './Modal';
 import { TodoForm } from './TodoForm';
 import { TodoItemCard } from './TodoItemCard';
+import { UserBar } from './UserBar';
 import { Button } from './ui/Button';
+import { PlusIcon } from './ui/Icons';
 
 export function TodoApp() {
-  const { token, email, logout } = useAuth();
+  const { token, email } = useAuth();
   const [todos, setTodos] = useState<Todo[]>([]);
   const [filter, setFilter] = useState<TodoFilter>('all');
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +32,7 @@ export function TodoApp() {
     setError(null);
 
     try {
-      const data = await api.getTodos(token, filter);
+      const data = await api.getTodos(token);
       setTodos(data);
     } catch (err) {
       const message =
@@ -36,7 +43,7 @@ export function TodoApp() {
     } finally {
       setIsLoading(false);
     }
-  }, [token, filter]);
+  }, [token]);
 
   useEffect(() => {
     void loadTodos();
@@ -108,90 +115,78 @@ export function TodoApp() {
     await loadTodos();
   }
 
-  const activeCount = todos.filter((t) => !t.isCompleted).length;
-  const completedCount = todos.filter((t) => t.isCompleted).length;
+  const activeTodos = useMemo(
+    () => todos.filter((todo) => !todo.isCompleted),
+    [todos]
+  );
+
+  const filteredTodos = useMemo(() => {
+    if (filter === 'active') {
+      return activeTodos;
+    }
+
+    if (filter === 'completed') {
+      return todos.filter((todo) => todo.isCompleted);
+    }
+
+    return todos;
+  }, [todos, activeTodos, filter]);
+
+  const greeting = email ? getTimeGreeting() : '';
+  const displayName = email ? getDisplayName(email) : '';
+  const taskSummary = buildTaskSummary(activeTodos);
 
   return (
     <div>
-      <header className="mb-8 flex flex-col items-start justify-between gap-6 sm:mb-10 sm:flex-row sm:items-center md:mb-12">
-        <div>
-          <h1 className="font-nunito mb-2 text-4xl font-black leading-[1.1] tracking-tight text-clay-foreground sm:text-5xl md:text-6xl">
-            My Tasks
-          </h1>
-          <p className="m-0 text-base font-medium leading-relaxed text-clay-muted sm:text-lg">
-            Signed in as <span className="font-bold text-clay-foreground">{email}</span>
-          </p>
-        </div>
-        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-          <Button
-            onClick={() => setIsAddModalOpen(true)}
-            size="lg"
-            className="w-full sm:w-auto"
-          >
-            + Add task
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={logout}
-            size="lg"
-            className="w-full sm:w-auto"
-          >
-            Sign out
-          </Button>
-        </div>
+      <UserBar />
+
+      <header className="mb-8 sm:mb-10 md:mb-12">
+        <h1 className="font-nunito m-0 text-4xl font-black leading-[1.1] tracking-tight text-clay-foreground sm:text-5xl md:text-6xl">
+          {greeting}, {displayName}
+        </h1>
+        <p className="mt-3 m-0 max-w-2xl text-base font-medium leading-relaxed text-clay-muted sm:text-lg">
+          {isLoading ? 'Checking your tasks...' : taskSummary}
+        </p>
       </header>
 
       <ErrorBanner message={error} onDismiss={() => setError(null)} />
-
-      <div className="mb-6 grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3">
-        {[
-          { label: 'Total', value: todos.length, gradient: 'from-purple-400 to-purple-600' },
-          { label: 'Active', value: activeCount, gradient: 'from-sky-400 to-sky-600' },
-          { label: 'Done', value: completedCount, gradient: 'from-emerald-400 to-emerald-600' },
-        ].map((stat) => (
-          <div
-            key={stat.label}
-            className="flex flex-col items-center justify-center rounded-[32px] bg-clay-card p-5 text-center shadow-clay-card backdrop-blur-xl transition-all duration-500 hover:-translate-y-1 hover:shadow-clay-card-hover sm:p-6 md:col-span-1"
-          >
-            <div
-              className={`mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br ${stat.gradient} font-nunito text-xl font-black text-white shadow-clay-button animate-clay-breathe`}
-            >
-              {stat.value}
-            </div>
-            <span className="font-nunito text-sm font-bold tracking-widest text-clay-muted uppercase">
-              {stat.label}
-            </span>
-          </div>
-        ))}
-      </div>
 
       <section>
         <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <h2 className="font-nunito m-0 text-2xl font-extrabold tracking-tight text-clay-foreground sm:text-3xl">
             Your tasks
           </h2>
-          <div
-            className="flex w-full gap-2 rounded-[20px] bg-[#EFEBF5] p-1.5 shadow-clay-pressed sm:w-auto"
-            role="tablist"
-            aria-label="Filter tasks"
-          >
-            {(['all', 'active', 'completed'] as TodoFilter[]).map((value) => (
-              <button
-                key={value}
-                type="button"
-                role="tab"
-                aria-selected={filter === value}
-                className={[
-                  'flex-1 rounded-[16px] border-0 px-5 py-3 font-nunito text-sm font-bold capitalize tracking-wide transition-all duration-200 sm:flex-initial',
-                  filter === value
-                    ? 'bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white shadow-clay-button'
-                    : 'bg-transparent text-clay-muted hover:text-clay-foreground',
-                ].join(' ')}
-                onClick={() => setFilter(value)}
-              >
-                {value}
-              </button>
-            ))}
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+            <div
+              className="flex w-full gap-2 rounded-[20px] bg-[#EFEBF5] p-1.5 shadow-clay-pressed sm:w-auto"
+              role="tablist"
+              aria-label="Filter tasks"
+            >
+              {(['all', 'active', 'completed'] as TodoFilter[]).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="tab"
+                  aria-selected={filter === value}
+                  className={[
+                    'flex-1 rounded-[16px] border-0 px-5 py-3 font-nunito text-sm font-bold capitalize tracking-wide transition-all duration-200 sm:flex-initial',
+                    filter === value
+                      ? 'bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white shadow-clay-button'
+                      : 'bg-transparent text-clay-muted hover:text-clay-foreground',
+                  ].join(' ')}
+                  onClick={() => setFilter(value)}
+                >
+                  {value}
+                </button>
+              ))}
+            </div>
+            <Button
+              onClick={() => setIsAddModalOpen(true)}
+              className="w-full gap-2 sm:w-auto"
+            >
+              <PlusIcon />
+              Add task
+            </Button>
           </div>
         </div>
 
@@ -202,7 +197,7 @@ export function TodoApp() {
               Loading tasks...
             </p>
           </div>
-        ) : todos.length === 0 ? (
+        ) : filteredTodos.length === 0 ? (
           <div className="rounded-[32px] bg-clay-card px-6 py-12 text-center shadow-clay-card backdrop-blur-xl">
             <div
               className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-pink-600 text-3xl text-white shadow-clay-button"
@@ -221,7 +216,7 @@ export function TodoApp() {
           </div>
         ) : (
           <div className="grid gap-4">
-            {todos.map((todo) => (
+            {filteredTodos.map((todo) => (
               <TodoItemCard
                 key={todo.id}
                 todo={todo}
@@ -238,8 +233,15 @@ export function TodoApp() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         title="Add a task"
+        description="Capture what you need to get done."
+        icon={<PlusIcon className="h-5 w-5" />}
       >
-        <TodoForm submitLabel="Add task" onSubmit={handleCreate} />
+        <TodoForm
+          variant="modal"
+          submitLabel="Add task"
+          onSubmit={handleCreate}
+          onCancel={() => setIsAddModalOpen(false)}
+        />
       </Modal>
     </div>
   );
